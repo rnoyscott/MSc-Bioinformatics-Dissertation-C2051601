@@ -1,0 +1,60 @@
+library(reticulate)
+
+---
+title: "000_Seurat_Object_Creator"
+output: html_document
+date: "2024-04-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("/home/c.c2051601/MET592/temp/Code")
+ad <- import("anndata", convert = FALSE)
+```
+
+Import full data set
+
+```{r}
+BloodCells <- readRDS("../Input/Primary/AllSamplesFindClusters1_6_mappedCelltype.rds")
+```
+
+Rename sample names (these need to be alphabetical how you want them presented)
+
+```{r}
+BloodCells@meta.data[["AllSamples"]][which(BloodCells@meta.data[["AllSamples"]] == "O")] <- "Control"
+BloodCells@meta.data[["AllSamples"]][which(BloodCells@meta.data[["AllSamples"]] == "V")] <- "Viraemic"
+BloodCells@meta.data[["AllSamples"]][which(BloodCells@meta.data[["AllSamples"]] == "E")] <- "Exposed"
+```
+
+Add in the patient IDs
+
+```{r}
+#Read in data linking cell ID to patient ID
+IDs <- read.table("../Resources/Metadata/000_cellID_sampleName.txt", header = TRUE)
+#Use lookup function from qdapTools to add in patient ID, based on cellID
+BloodCells <- AddMetaData(BloodCells, lookup(BloodCells@meta.data[["cell_ID"]], IDs, missing = NA), col.name = "ID")
+
+#Check that all the cells are accounted for (yes, they are)
+unique(BloodCells@meta.data[["ID"]])
+#We have 3 Exposed patients, 4 Viraemics and 3 Control
+
+#Finally, let's give each patient a better name
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "E249")] <- "Exposed_P17-249"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "E278")] <- "Exposed_P17-278"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "E289")] <- "Exposed_P17-289"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "V210")] <- "Viraemic_P17-210"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "V213")] <- "Viraemic_P17-213"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "V236")] <- "Viraemic_P17-236"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "V272")] <- "Viraemic_P17-272"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "O238")] <- "Control_P17-238"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "O240")] <- "Control_P17-240"
+BloodCells@meta.data[["ID"]][which(BloodCells@meta.data[["ID"]] == "O242")] <- "Control_P17-242"
+
+#Clean up the environment
+rm(IDs)
+```
+
+```{r}
+SaveH5Seurat(BloodCells, filename = "../Input/Primary/BloodCells.h5Seurat")
+Convert("../Input/Primary/BloodCells.h5Seurat", dest = "h5ad")
+```

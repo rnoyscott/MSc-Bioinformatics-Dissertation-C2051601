@@ -1,0 +1,25 @@
+---
+title: "Untitled"
+output: html_document
+date: "2024-08-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+knitr::opts_knit$set(root.dir = '/scratch/c.c2051601/Project/Scripts/')
+source('CodeBase.R')
+```
+
+```{r}
+adata2RDS('../Input/Secondary/BloodCells.h5ad', '../Resources/Metadata/')
+```
+
+```{r}
+SubsetCells <- c('Tcm/Naive helper T cells', 'Tem/Effector helper T cells')
+CD4Tcells <- subset(BloodCells, subset = majority_voting %in% SubsetCells)
+i = 1
+Pathways('CD4Tcells', 20, 8, 100, '../Output/DGE/Seurat/CD4Tcells/', '../Output/ORA/clusterProfiler/', 'BP', '../Resources/C7/', CD4Tcells)
+```

@@ -1,0 +1,27 @@
+---
+title: "DGEpy"
+output: html_document
+date: "2024-04-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '/scratch/c.c2051601/Project/Scripts/')
+source('CodeBase.R')
+
+library(limma)
+```
+
+```{r}
+adata2RDS('../Input/Secondary/BloodCells.h5ad', '../Resources/Metadata/')
+```
+
+Subset CD4+ T Cells
+
+```{r}
+#Select CD4+ T cells
+SubsetCells <- c('Tcm/Naive helper T cells', 'Tem/Effector helper T cells')
+Subsetting(SubsetCells, "CD4Tcells", "VE", "Viraemic", "Exposed")
+Subsetting(SubsetCells, "CD4Tcells", "VC", "Viraemic", "Control")
+Subsetting(SubsetCells, "CD4Tcells", "EC", "Exposed", "Control")
+```
