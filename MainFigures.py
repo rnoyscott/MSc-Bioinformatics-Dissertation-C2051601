@@ -26,6 +26,7 @@ color_discrete_map= {'Viraemic': '#c38961', 'Control': 'lightgrey', 'Exposed': '
 # Plot clusters UMAP
 fig, ax = plt.subplots(figsize=(10, 10))
 sc.pl.umap(adata, color = 'overcluster', legend_loc = 'on data', legend_fontoutline=2, add_outline=True, s=10, ax=ax)
+ax.collections[0].set_color('gray')
 ax.set_xlabel("UMAP 1", fontweight='bold')
 ax.set_ylabel("UMAP 2", fontweight='bold')
 ax.set_title("Cluster Identities", fontsize=18, fontweight='bold')
@@ -119,35 +120,40 @@ print(f"Boxplot saved to: {filename_boxplot}")
 AllSamples = adata.obs['AllSamples'].unique()
 print(f"Patient Groups: {AllSamples}")
 
-n_idents = len(AllSamples)
+n_idents = len(AllSamples) # number of subplots using unique values in AllSamples (each unique condition)
 
 figsize = 10
 wspace = 0.25
+
 # Adapt figure size based on number of rows and columns and added space between them
-# (e.g. wspace between columns)
-# Create subplots with 1 row and n_idents columns
 fig, axes = plt.subplots(1, n_idents, figsize=(8 * (n_idents), 8))
 plt.subplots_adjust(wspace=wspace)
 # Plot UMAPs for each 'AllSamples' with the gene expression overlay
 for i, AllSample in enumerate(AllSamples):
-    subset = adata[adata.obs['AllSamples'] == AllSample]
+    subset = adata[adata.obs['AllSamples'] == AllSample] # subset to current condition to be plotted
+    
+    # For all figures apart from the last one, do not plot the legend
     if i < n_idents - 1:
         sc.pl.umap(subset, color='majority_voting', add_outline=True, s=10, ax=axes[i], show=False, title=AllSample, legend_loc=None)
+
+    # Plot the legend for final figure
     else:
         sc.pl.umap(subset, color='majority_voting', add_outline=True, s=10, ax=axes[i], show=False, title=AllSample, legend_loc='right margin', legend_fontsize='xx-small')
-        
+    
+    # Modify the axes
     axes[i].set_xlabel("UMAP 1", fontweight='bold')
     axes[i].set_ylabel("UMAP 2", fontweight='bold')
     axes[i].set_title(f"{AllSample}", fontsize=18, fontweight='bold')
     axes[-1].legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize='x-small')
 
+# Add a universal figure title
 fig.suptitle('Majority Voting (CellTypist) Immune Cell Types', fontsize = 30, fontweight='bold')
 
 # Save UMAP overlay as file
 filename_umap = os.path.join(dir, f"newCellType_UMAP_Overlay_300dpi.png")
 plt.savefig(filename_umap, dpi=300, format='png')
 
-# Get unique values of 'AllSamples'
+# Same process for plotting UMAP coloured by patient ID
 AllSamples = adata.obs['AllSamples'].unique()
 print(f"Patient Groups: {AllSamples}")
 
@@ -155,13 +161,10 @@ n_idents = len(AllSamples)
 
 figsize = 10
 wspace = 0.25
-# Adapt figure size based on number of rows and columns and added space between them
-# (e.g. wspace between columns)
-# Create subplots with 1 row and n_idents columns
 
 fig, axes = plt.subplots(1, n_idents, figsize=(8 * (n_idents), 8))
 plt.subplots_adjust(wspace=wspace, bottom=0.25)
-# Plot UMAPs for each 'AllSamples' with the gene expression overlay
+
 for i, AllSample in enumerate(AllSamples):
     subset = adata[adata.obs['AllSamples'] == AllSample]
     sc.pl.umap(subset, color='ID', add_outline=True, s=10, ax=axes[i], show=False, title=AllSample, legend_fontsize='x-small')
@@ -178,108 +181,130 @@ filename_umap = os.path.join(dir, f"newCellType_ID_UMAP_Overlay_300dpi.png")
 plt.savefig(filename_umap, dpi=300, format='png')
 
 # Display average expression per gene against log2fc values
-# Extract the gene expression matrix from adata.raw
+
+## Extract the gene expression matrix from adata.raw
 gene_expression_matrix = adata.layers['filtered_counts'].toarray()
 
-# Extract the gene names (assuming they are stored in adata.raw.var)
+## Extract the gene names (assuming they are stored in adata.raw.var)
 gene_names = adata.var.index
 
-# Calculate mean expression for each gene across all cells
+## Calculate mean expression for each gene across all cells
 mean_expression = gene_expression_matrix.mean(axis=0)
 
-# Create a DataFrame with gene names and mean expressions
+## Create a DataFrame with gene names and mean expressions
 mean_expression_df = pd.DataFrame({
     'Gene': gene_names,
     'MeanExpression': mean_expression
 })
 
+## Merge the expression data eith DEG data
 DEGfile_exp = pd.merge(DEGfile, mean_expression_df, on = 'Gene')
 
+## Set custom parameters and plot data
 custom_params = {'axes.spines.right': False, 'axes.spines.top':False}
 sns.set_theme(style='ticks', rc = custom_params)
 plt.figure(figsize=(10, 6))
 
 sns.scatterplot(x = 'MeanExpression', y = 'LogFoldChange', color = 'black', edgecolor = None, s = 30, data = DEGfile_exp)
-sns.scatterplot(x = 'MeanExpression', y = 'LogFoldChange', color = '#bebada', edgecolor = None, s = 10, data = DEGfile_exp)
-plt.ylabel("log2 FC")
-plt.xlabel("Mean Expression")
+sns.scatterplot(x = 'MeanExpression', y = 'LogFoldChange', color = 'grey', edgecolor = None, s = 10, data = DEGfile_exp)
+plt.ylabel("log2 FC", fontweight = 'bold')
+plt.xlabel("Mean Expression", fontweight = 'bold')
 
-# Save as figure
+## Save as figure
 filename_exp_log2fc = os.path.join(dir, f"Expression_log2FC_300dpi.png")
 plt.savefig(filename_exp_log2fc, dpi=300, format='png')
 
-# Correlation between predicted cell type clusters
+plt.rcParams['font.weight'] = 'bold'
+plt.rcParams['font.style'] = 'italic'
+plt.rcParams['axes.labelweight'] = 'bold'
+plt.rcParams['axes.titleweight'] = 'bold'
+
+# Correlation between predicted cell type clusters using a matrix plot
 ax = sc.pl.correlation_matrix(adata, "majority_voting", cmap = 'RdBu_r', figsize=(9, 9))
 
+## Save as figure
 filename_corrmatrix = os.path.join(dir, f"Correlation_Matrix_300dpi.png")
 plt.savefig(filename_corrmatrix, dpi=300, format='png', bbox_inches='tight')
 
 # Plot total cell number per cell type for each condition
 
-# Initialize an empty list to store the results
+## Initialize an empty list to store the results
 results = []
-celltypes = adata.obs['majority_voting'].unique()
-groups = adata.obs['AllSamples'].unique()
+celltypes = adata.obs['majority_voting'].unique() # the majority voted cell types
+groups = adata.obs['AllSamples'].unique() # the conditions
 
-# Iterate over each unique celltype
+## Iterate over each unique celltype
 for celltype in celltypes:
-    # Subset the data for the current celltype
+    ### Subset the data for the current celltype
     adata_celltype = adata[adata.obs['majority_voting'] == celltype]
     
-    # Iterate over each unique group
+    ### Iterate over each unique group
     for group in groups:
-        # Subset the data for the current group within the current celltype
+        #### Subset the data for the current group within the current celltype
         adata_celltype_group = adata_celltype[adata_celltype.obs['AllSamples'] == group]
         
-        # Count the number of cells (rows) in this subset
+        #### Count the number of cells (rows) in this subset
         cell_count = adata_celltype_group.shape[0]
         
-        # Append the result to the list
+        #### Append the result to the list
         results.append({'celltype': celltype, 'group': group, 'cell_total': cell_count})
 
-# Convert the list of results into a DataFrame
+## Convert the list of results into a DataFrame
 df = pd.DataFrame(results)
 
-# Display the resulting DataFrame
+## Display the resulting DataFrame
 print(df)
 
-plt.rcParams.update(plt.rcParamsDefault)
+## Plot results
+plt.rcParams.update(plt.rcParamsDefault) # reset plotting parameters
+
 plt.figure(figsize=(12, 8))
 sns.barplot(df, y = 'cell_total', x = 'celltype', palette=color_discrete_map, edgecolor = 'black', hue = 'group')
+
+### Adjust aesthetics
 plt.xticks(rotation=80)
 plt.xlabel('Predicted Cell Type', fontsize = 16, fontweight = 'bold')
 plt.ylabel('Total Cell Count', fontsize = 16, fontweight = 'bold')
 plt.legend(title = 'Condition', loc = 'center left', bbox_to_anchor = (1, 0.5))
 plt.tight_layout()
 
-# Save as figure
+## Save as figure
 filename_exp_log2fc = os.path.join(dir, f"CellNumber_Celltype_300dpi.png")
 plt.savefig(filename_exp_log2fc, dpi=300, format='png')
 
+plt.rcParams.update(plt.rcParamsDefault)
+
+# Read in the data containing marker gene scores for each predicted cell type
 adata = sc.read_h5ad('../Input/Secondary/BloodCellsScores.h5ad')
 
 # Plot naive helper T cell score
 fig, ax = plt.subplots(figsize=(10, 10))
+
 sc.pl.umap(adata, color = 'Tcm/Naive helper T cells_score', legend_loc = 'on data', legend_fontoutline=2, add_outline=True, s=10, ax=ax, show=False)
+
+## Customise the axes
 ax.set_xlabel("UMAP 1", fontweight='bold')
 ax.set_ylabel("UMAP 2", fontweight='bold')
 ax.set_title("Tcm/Naive Helper T Cells Score", fontsize=18, fontweight='bold')
 plt.show()
 
-# Save UMAP overlay as file
+## Save UMAP overlay as file
 filename_umap = os.path.join(dir, f"NaiveScore_UMAP_Overlay_300dpi.png")
 plt.savefig(filename_umap, dpi=300, format='png')
 plt.close()
 
 # Plot effector helper T cell score
 fig, ax = plt.subplots(figsize=(10, 10))
+
 sc.pl.umap(adata, color = 'Tem/Effector helper T cells_score', legend_loc = 'on data', legend_fontoutline=2, add_outline=True, s=10, ax=ax, show=False)
+
+## Customise the axes
 ax.set_xlabel("UMAP 1", fontweight='bold')
 ax.set_ylabel("UMAP 2", fontweight='bold')
 ax.set_title("Tem/Effector Helper T Cells Score", fontsize=18, fontweight='bold')
 plt.show()
 
-# Save UMAP overlay as file
+## Save UMAP overlay as file
 filename_umap = os.path.join(dir, f"EffectorScore_UMAP_Overlay_300dpi.png")
 plt.savefig(filename_umap, dpi=300, format='png')
 plt.close()

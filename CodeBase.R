@@ -2,28 +2,18 @@
 #install.packages("Seurat")
 #install.packages("qdapTools")
 #install.packages("ggplot2")
-#install.packages("ggsignif")
 #install.packages("ggpubr")
 #install.packages("cowplot")
 #install.packages("tidyverse")
 #install.packages("dplyr")
 #install.packages("RColorBrewer")
-#install.packages("viridis")
 #install.packages("SCpubr")
-#BiocManager::install("ComplexHeatmap")
-#install.packages("ComplexHeatmap")
 #BiocManager::install('biomaRt')
 #BiocManager::install('clusterProfiler')
 #BiocManager::install('org.Hs.eg.db')
-#BiocManager::install('pathview')
-#install.packages("biomaRt")
-#install.packages("clusterProfiler")
-#install.packages("org.Hs.eg.db")
-#install.packages("pathview")
 #install.packages("GOSemSim")
-#We need the package devtools to install presto
-#install.packages("devtools")
-#devtools::install_github("immunogenomics/presto")
+#BiocManager::install('reticulate')
+#remotes::install_github('satijalab/seurat-data')
 
 #Load required packages and their dependencies.
 #For loading and holding the data
@@ -34,9 +24,7 @@ library(qdapTools)
 
 #For plotting all graphs
 library(ggplot2)
-library(ggsignif)
 library(ggpubr)
-library(ggrepel)
 library(cowplot)
 
 #For functions
@@ -45,19 +33,23 @@ library(dplyr)
 
 #To give me pretty colours
 library(RColorBrewer)
-library(viridis)
 
 #For heatmaps
 library(SCpubr)
-library(ComplexHeatmap)
 
 #Enrichment Analysis
 library(biomaRt)
 library(clusterProfiler)
+
 #Human genome reference
 library(org.Hs.eg.db)
-library(pathview)
 library(GOSemSim)
+
+#For converting anndata back into RDS
+library(reticulate)
+
+#For curating data to produce the custom CellTypist model
+library(SeuratData)
 
 #Function for defining the top 10 GO pathways using a given list of DEGs
 #Will also output all pathways, with corresponding description, gene ratio, p-value, adjusted p-value, gene IDs etc. as a CSV file

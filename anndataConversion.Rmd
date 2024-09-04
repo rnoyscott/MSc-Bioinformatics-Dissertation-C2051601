@@ -30,7 +30,7 @@ Add in the patient IDs
 
 ```{r}
 #Read in data linking cell ID to patient ID
-IDs <- read.table("../Resources/Metadata/000_cellID_sampleName.txt", header = TRUE)
+IDs <- read.table("../Resources/Metadata/cellID_sampleName.txt", header = TRUE)
 #Use lookup function from qdapTools to add in patient ID, based on cellID
 BloodCells <- AddMetaData(BloodCells, lookup(BloodCells@meta.data[["cell_ID"]], IDs, missing = NA), col.name = "ID")
 

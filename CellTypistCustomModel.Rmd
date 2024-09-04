@@ -1,0 +1,63 @@
+---
+title: "Untitled"
+author: "Reuben Noy Scott"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = '/scratch/c.c2051601/Project/Scripts/')
+```
+
+```{r}
+library(Seurat)
+library(SeuratObject)
+library(tidyverse)
+library(reticulate) # for converting RDS to h5ad
+
+# Install SeuratData using remotes
+#remotes::install_github('satijalab/seurat-data')
+library(SeuratData)
+```
+
+```{r}
+# List available datasets
+SeuratData::AvailableData()
+```
+
+```{r}
+# Install the PBMC 3K and IFNB datasets
+InstallData('pbmc3k')
+InstallData('ifnb')
+```
+
+```{r}
+# Retrieve the dataset and update it
+data('pbmc3k')
+data('ifnb')
+
+pbmc3kup <- UpdateSeuratObject(pbmc3k)
+ifnbup <- UpdateSeuratObject(ifnb)
+```
+
+```{r}
+# Save as a h5ad file to be compatible with Scanpy
+SaveH5Seurat(pbmc3kup, filename = "../Resources/CellTypist/pbmc3k.h5Seurat")
+Convert("pbmc3k.h5Seurat", dest = "h5ad")
+
+SaveH5Seurat(pbmc3kup, filename = "../Resources/CellTypist/ifnb.h5Seurat")
+Convert("ifnb.h5Seurat", dest = "h5ad")
+```
+
+```{r}
+# Create a dataframe containing the cell IDs and their associated cell type labels
+annotations <- data.frame(Cell_ID = rownames(ifnbup@meta.data), seurat_annotations = ifnbup@meta.data$seurat_annotations)
+
+# Save to CSV
+write.csv(annotations, "../Resources/CellTypist/ifnb_anno.csv", row.names = FALSE)
+
+annotations <- data.frame(Cell_ID = rownames(pbmc3kup@meta.data), seurat_annotations = pbmc3kup@meta.data$seurat_annotations)
+
+# Save to CSV
+write.csv(annotations, "../Resources/CellTypist/pbmc3k_anno.csv", row.names = FALSE)
+```

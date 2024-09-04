@@ -73,7 +73,7 @@ def main(args):
                 ### Only if a pair is identified
                 if dataset_name in DEGfiles:
                     print(f"Calculating pathways for {dataset_name}...")
-                    Pathways(dataset_name, args.width, args.height, args.dpi, comparison, DEGfiles[dataset_name], args.background, datasets[dataset_name], args.output)
+                    Pathways(dataset_name, comparison, DEGfiles[dataset_name], args.background, datasets[dataset_name], args.output)
                     print(f"{dataset_name} completed.")
                 ### If there is a mismatch, do not run pathways for the current data file and print an error message
                 else:
@@ -81,9 +81,9 @@ def main(args):
     
     # Procedure if subset is selected from function calls
     if args.command == 'subset':
-        adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
+        adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.comparison, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
 
-        genes = SubsetDEGs(DEGfile, args.input3, method='GO_ID', gene_source=None, go_term=args.goterm, row_number=None) # get a subset of genes from the DEG file that belong to the GO term
+        genes = SubsetDEGs(DEGfile, args.input3, go_term=args.goterm) # get a subset of genes from the DEG file that belong to the GO term
         print(genes)
 
         MultipleGeneAnalysis(args.pathwaytitle, args.celltype, genes, adata, DEGfile, output=args.output, dpi=args.dpi, width=args.width, height=args.height, seurat=args.seurat) # perform multiple gene analysis on the cell type and genes identified using the GO term
@@ -91,13 +91,13 @@ def main(args):
     # Procedure if a manual list of genes is passed
     if args.command == 'multiple':
         if args.genes:
-            adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
+            adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.comparison, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
             MultipleGeneAnalysis(args.pathwaytitle, args.celltype, args.genes, adata, DEGfile, output=args.output, dpi=args.dpi, width=args.width, height=args.height, seurat=args.seurat) # perform multiple gene analysis on the cell type and genes that were manually passed
 
     # Procedure if single is selected from function calls
     if args.command == 'single':
         if args.gene:
-            adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
+            adata, adata1, DEGfile = FileLocator(args.input1, args.input2, args.comparison, args.celltype, args.seurat) # read in the data files that are specific to the given cell type
 
             SingleGeneAnalysis(args.gene, args.celltype, width=args.width, height=args.height, dpi=args.dpi, h5adObject=adata, BloodCells=adata1, output=args.output) # perform single gene analysis on the cell type and gene of interest
 
@@ -112,9 +112,6 @@ if __name__ == '__main__':
     pathways_parser.add_argument('-i1', '--input1', type=str, required=True, help='Path to input directory containing datasets.')
     pathways_parser.add_argument('-i2', '--input2', type=str, required=True, help='Path to input directory containing DEG files.')
     pathways_parser.add_argument('-o', '--output', type=str, required=True, help='Path to output directory.')
-    pathways_parser.add_argument('-wd', '--width', type=int, default=10, help='Width of output figures.')
-    pathways_parser.add_argument('-ht', '--height', type=int, default=8, help='Height of output figures.')
-    pathways_parser.add_argument('-d', '--dpi', type=int, default=300, help='DPI of output figures.')
     pathways_parser.add_argument('-srt', '--seurat', action='store_true', help='Whether DEGs were calculated with Seurat.')
 
     # Subset subparser
@@ -130,7 +127,8 @@ if __name__ == '__main__':
     subset_parser.add_argument('-ct', '--celltype', type=str, required=True, help='Title of cell type.')
     subset_parser.add_argument('-gt', '--goterm', nargs='+', help='GO accession ID.')
     subset_parser.add_argument('-srt', '--seurat', action='store_true', help='Whether the DEGs were calculated with Seurat.')
-
+    subset_parser.add_argument('-cmp', '--comparison', type=str, required=True, help='Groupwise comparison suffix (either VE, VC, or EC).')
+    
     # Multiple subparser
     multiple_parser = subparsers.add_parser('multiple', help='Multiple gene analysis.')
     multiple_parser.add_argument('-i1', '--input1', type=str, required=True, help='Path to input directory containing datasets.')
@@ -143,7 +141,7 @@ if __name__ == '__main__':
     multiple_parser.add_argument('-ct', '--celltype', type=str, required=True, help='Title of cell type.')
     multiple_parser.add_argument('-gs', '--genes', nargs='+', help='List of genes for analysis.')
     multiple_parser.add_argument('-srt', '--seurat', action='store_true', help='Whether the DEGs were calculated with Seurat.')
-
+    multiple_parser.add_argument('-cmp', '--comparison', type=str, required=True, help='Groupwise comparison suffix (either VE, VC, or EC).')
 
     # Single subparser
     single_parser = subparsers.add_parser('single', help='Single gene analysis.')
@@ -156,6 +154,7 @@ if __name__ == '__main__':
     single_parser.add_argument('-ct', '--celltype', type=str, required=True, help='Title of cell type.')
     single_parser.add_argument('-g', '--gene', type=str, help='Gene name for analysis.')
     single_parser.add_argument('-srt', '--seurat', action='store_true', help='Whether the DEGs were calculated with Seurat.')
+    single_parser.add_argument('-cmp', '--comparison', type=str, required=True, help='Groupwise comparison suffix (either VE, VC, or EC).')
 
     args = parser.parse_args()
     main(args)

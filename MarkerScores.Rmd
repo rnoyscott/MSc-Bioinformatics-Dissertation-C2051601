@@ -1,0 +1,65 @@
+---
+title: "Untitled"
+author: "Reuben Noy Scott"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = '/scratch/c.c2051601/Project/Scripts/')
+```
+
+```{r}
+library(tidyverse) # manipulating data
+library(ggplot2) # plotting data
+library(forcats) # for re-ordering categorical variables
+library(viridis) # for the viridis colour scale
+```
+
+```{r}
+Predictions <- read_csv("../Output/QC/cluster_predictions.csv")
+Scores <- read_csv("../Output/QC/scoresv1.csv")
+```
+
+```{r}
+Predictions <- Predictions |>
+  pivot_longer(cols = c(ref_score, ref_score_pbmc3k), names_to = 'refs', values_to = 'scores')
+```
+
+```{r}
+# Plot the median score for effector helper T cells across each cluster
+EffectorScore <- Scores |>
+  ggplot(aes(x = fct_reorder(majority_voting, Scores$`Tem/Effector helper T cells_median_score`, .desc = FALSE), 
+             y = Scores$`Tem/Effector helper T cells_median_score`)) +
+  geom_col(col = 'black', aes(fill = Scores$`Tem/Effector helper T cells_median_score`)) +
+  theme_classic() +
+  scale_fill_viridis_c(option = "D") +
+  theme(axis.title.x = element_text(face = 'bold'),
+        axis.title.y = element_text(face = 'bold'),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = 'Tem/Effector helper T cells Median Score', x = 'Majority Voting Cell Type') +
+  coord_flip() +
+  guides(fill = 'none')
+
+# Plot the median score for naive helper T cells across each cluster
+NaiveScore <- Scores |>
+  ggplot(aes(x = fct_reorder(majority_voting, Scores$`Tcm/Naive helper T cells_median_score`, .desc = FALSE), 
+             y = Scores$`Tcm/Naive helper T cells_median_score`)) +
+  geom_col(col = 'black', aes(fill = Scores$`Tcm/Naive helper T cells_median_score`)) +
+  theme_classic() +
+  scale_fill_viridis_c(option = "D") +
+  theme(axis.title.x = element_text(face = 'bold'),
+        axis.title.y = element_text(face = 'bold'),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank()) +
+  labs(y = 'Tcm/Naive helper T cells Median Score', x = NULL) +
+  coord_flip() +
+  guides(fill = 'none')
+
+# Merge the two plots in the same window
+scores <- cowplot::plot_grid(EffectorScore, NaiveScore, ncol = 2, nrow = 1)
+
+# Save the figure
+ggsave('../Output/Figures/scores_CD4Tcells.png', scores, dpi = 300, width = 10, height = 6)
+```

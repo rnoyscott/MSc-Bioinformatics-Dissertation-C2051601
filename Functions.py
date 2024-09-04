@@ -1,7 +1,7 @@
 # Functions for single cell analysis
 
 # Function for locating groups of files, specifically h5ad and csv files
-def FileLocator(input1, input2, celltype, seurat):
+def FileLocator(input1, input2, comparison, celltype, seurat):
     # Comprehensive list of all modules used across every function
     import scanpy as sc # Scanpy is the primary module for single cell RNAseq analysis in Python
     import matplotlib.pyplot as plt # for producing customisable figures 
@@ -17,9 +17,7 @@ def FileLocator(input1, input2, celltype, seurat):
 
     adata_file = os.path.join(input1, f'{celltype}.h5ad') # concatenate the input directory with a cell type data file
     adata1_file = os.path.join(input1, 'BloodCells.h5ad') # read in the primary data file named BloodCells
-    DEG_file = os.path.join(input2, f'VE_DEG_{celltype}.csv')
-    #DEG_file = glob.glob(os.path.join(input2, f'*DEG*{celltype}*.csv')) # concatenate the input directory with a cell type DEG file
-
+    DEG_file = os.path.join(input2, f'{comparison}_DEG_{celltype}.csv')
 
     adata = sc.read_h5ad(adata_file) # read in the subset data file
     adata1 = sc.read_h5ad(adata1_file) # read in the primary data file
@@ -198,7 +196,6 @@ def MultipleGeneAnalysis(pathwayname, cellname, genes, h5adObject, DEGfile, outp
         values_to_plot="logfoldchanges", cmap='bwr',
         vmin=-4,
         vmax=4,
-        #min_logfoldchange=3,
         colorbar_title='log2 FC',
         dendrogram=False
         )
@@ -308,7 +305,7 @@ def MultipleGeneAnalysis(pathwayname, cellname, genes, h5adObject, DEGfile, outp
         print(f'Failed to create volcano plot of genes in {cellname}: {e}') # print errors if they occur
 
 # Define function for subsetting a list od DEGs using genes for a particular pathway
-def SubsetDEGs(DEGfile, path_to_pathway_results, go_terms=None):
+def SubsetDEGs(DEGfile, path_to_pathway_results, go_term=None):
     # Comprehensive list of all modules used across every function
     import scanpy as sc
     import matplotlib.pyplot as plt
@@ -348,7 +345,7 @@ def SubsetDEGs(DEGfile, path_to_pathway_results, go_terms=None):
     return genes
 
 # Define function for ORA
-def Pathways (cellname, width, height, dpi, comparison, DEGfile, path, h5adObject, output):
+def Pathways (cellname, comparison, DEGfile, path, h5adObject, output):
     # Comprehensive list of all modules used across every function
     import scanpy as sc
     import matplotlib.pyplot as plt
@@ -419,16 +416,6 @@ def Pathways (cellname, width, height, dpi, comparison, DEGfile, path, h5adObjec
         ### Save as a CSV file
         filename_enr_up = os.path.join(output, f"{cellname}_{comparison}_ORA_upregulated.csv")
         enr_up_df.to_csv(filename_enr_up)
-
-        ## Dotplot of upregulated pathways if the pathways dataframe is not empty
-        if not enr_up_df.empty:
-            
-            ### Define plotting parameters
-            fig, ax = plt.subplots(figsize=(width, height))
-
-            ### Plot a lenient threshold of 0.5 and save to the specified output directory
-            gp.dotplot(enr_up_df, title=f"Upregulated Pathways {comparison}", cmap=plt.cm.autumn_r, cutoff=0.9, ofname=os.path.join(output, f"{cellname}_{comparison}ORA_Plot_Upregulated_{dpi}dpi.png"))
-            plt.close()
     else:
         print("No upregulated genes, enrichment analysis not run.")
     
@@ -443,10 +430,6 @@ def Pathways (cellname, width, height, dpi, comparison, DEGfile, path, h5adObjec
         print(f"Number of downregulated pathways: {len(enr_dw_df)}")
         filename_enr_dw = os.path.join(output, f"{cellname}_{comparison}_ORA_downregulated.csv")
         enr_dw_df.to_csv(filename_enr_dw)
-        # Dotplot of downregulated pathways
-        if not enr_dw_df.empty:
-            fig, ax = plt.subplots(figsize=(width, height))
-            gp.dotplot(enr_dw_df, title=f"Downregulated Pathways {comparison}", cmap=plt.cm.winter_r, cutoff=0.9, ofname=os.path.join(output, f"{cellname}_{comparison}_ORA_Plot_Downregulated_{dpi}dpi.png"))
     else:
         print("No downregulated genes, enrichment analysis not run.")
 

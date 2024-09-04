@@ -1,0 +1,120 @@
+---
+title: "Untitled"
+author: "Reuben Noy Scott"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = '/scratch/c.c2051601/Project/Scripts/')
+```
+
+```{r}
+library(tidyverse) # manipulating data
+```
+
+```{r}
+# Read in the GSEApy pathways
+Gseapy <- read_csv("../Output/ORA/GSEApy/CD4Tcells/CD4Tcells_VE_ORA_downregulated.csv")
+
+# Convert GSEApy gene lists to comma-separated lists
+Gseapy_v001 <- Gseapy |>
+  select(-1, -2)
+Gseapy_v001$Genes <- gsub(";", ", ", Gseapy_v001$Genes)
+```
+
+```{r}
+# Create a function for extracting all GO terms
+extract_go_term <- function(input_string) {
+  go_term <- sub(".*\\((GO:\\d+)\\).*", "\\1", input_string)
+  return(go_term)
+}
+```
+
+```{r}
+# Apply the function to the entire dataframe
+Gseapy_v001$ID <- sapply(Gseapy_v001$Term, extract_go_term)
+```
+
+```{r}
+# Read in the clusterProfiler pathways
+cluster <- read_csv("D:\\Downloads\\CD4Tcells_VE_GSEA_downregulated_summary.csv")
+```
+
+```{r}
+cluster_v001 <- cluster |>
+  select(-1)
+cluster_v001$geneID <- gsub('/', ', ', cluster_v001$geneID)
+```
+
+```{r}
+# Create an ID column for merging the two dataframes
+cluster_v001$tool <- 'clusterProfiler'
+Gseapy_v001$tool <- 'Gseapy'
+```
+
+```{r}
+# Merge the two datasets for comparisons
+idsGseapy <- Gseapy_v001 |>
+  select(ID, tool, Term, Genes)
+idscluster <- cluster_v001 |>
+  select(ID, tool, Description, geneID)
+merged_IDs <- full_join(idsGseapy, idscluster, by = "ID")
+```
+
+```{r}
+count_genes_info <- function(genes, geneID) {
+  # Convert the Genes and geneID columns to lists
+  genes_list <- unlist(strsplit(genes, ",\\s*"))
+  geneID_list <- unlist(strsplit(geneID, ",\\s*"))
+  
+  # Find the intersection of the two lists
+  common_genes <- intersect(genes_list, geneID_list)
+  
+  # Return the number of common genes, total genes in Genes list, and total genes in geneID list
+  return(list(
+    common_genes_count = length(common_genes),
+    total_genes_genes = length(genes_list),
+    total_genes_geneID = length(geneID_list)
+  ))
+}
+
+# Apply the function to each row and expand the list into columns
+result <- merged_IDs %>%
+  #filter(ID == 'GO:0060338') %>%
+  rowwise() %>%
+  mutate(genes_info = list(count_genes_info(Genes, geneID))) %>%
+  unnest_wider(genes_info) %>%
+  select(Genes, geneID, total_genes_genes, total_genes_geneID, common_genes_count) %>%
+  filter(!is.na(Genes) & !is.na(geneID)) %>%
+  print()
+```
+
+```{r}
+# Create function for computing Jaccard index
+jaccard_index <- function(A, B) {
+  intersection <- length(intersect(A, B))
+  union <- length(union(A, B))
+  return(intersection / union)
+}
+
+indices <- c()
+
+# Loop through each row of the dataframe
+for (i in 1:nrow(result)) {
+  Gseapy <- unlist(strsplit(result$Genes[i], ","))
+  cluster <- unlist(strsplit(result$geneID[i], ","))
+  
+  # Calculate the Jaccard index for the current row
+  index <- jaccard_index(Gseapy, cluster)
+  
+  # Append the calculated index to the 'index' vector
+  indices <- c(indices, index)
+}
+
+# Calculate the mean of the Jaccard indices
+mean_jaccard <- mean(indices)
+std <- sd(indices)
+print(mean_jaccard)
+print(std)
+```
