@@ -17,13 +17,7 @@ library(viridis) # for the viridis colour scale
 ```
 
 ```{r}
-Predictions <- read_csv("../Output/QC/cluster_predictions.csv")
 Scores <- read_csv("../Output/QC/scoresv1.csv")
-```
-
-```{r}
-Predictions <- Predictions |>
-  pivot_longer(cols = c(ref_score, ref_score_pbmc3k), names_to = 'refs', values_to = 'scores')
 ```
 
 ```{r}

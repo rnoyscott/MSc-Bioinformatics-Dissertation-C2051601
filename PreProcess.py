@@ -90,7 +90,7 @@ adata = adata[adata.obs.percent_mito < 0.15, :]
 # Store current status of counts matrix in a seperate layer
 adata.layers['filtered_counts'] = adata.X.copy()
 
-# Normalise and transorm counts
+# Normalise and transform counts
 sc.pp.normalize_total(adata)
 sc.pp.log1p(adata)
 
@@ -202,8 +202,6 @@ plt.tight_layout()
 filename_dotplot = 'Predicted_CellType_Markers_Expression_Heatmap_300dpi.png'
 plt.savefig(filename_dotplot, dpi=300, format='png', bbox_inches='tight')
 plt.close()
-
-print(adata.obs['predicted_celltype_major'].unique())
 
 # Plot UMAP of predicted cell types using 'Immune_All_Low.pk1'
 plot_umap('majority_voting', 'Majority Voting (CellTypist) Immune Cell Types', 'filtered_counts', legend_mod = True)

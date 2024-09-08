@@ -25,3 +25,8 @@ Subsetting(SubsetCells, "CD4Tcells", "VE", "Viraemic", "Exposed")
 Subsetting(SubsetCells, "CD4Tcells", "VC", "Viraemic", "Control")
 Subsetting(SubsetCells, "CD4Tcells", "EC", "Exposed", "Control")
 ```
+
+```{r}
+#Select Classical monocytes
+
+```

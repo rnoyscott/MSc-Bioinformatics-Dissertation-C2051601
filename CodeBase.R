@@ -49,7 +49,7 @@ library(GOSemSim)
 library(reticulate)
 
 #For curating data to produce the custom CellTypist model
-library(SeuratData)
+#library(SeuratData)
 
 #Function for defining the top 10 GO pathways using a given list of DEGs
 #Will also output all pathways, with corresponding description, gene ratio, p-value, adjusted p-value, gene IDs etc. as a CSV file
